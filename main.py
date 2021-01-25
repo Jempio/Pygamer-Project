@@ -19,28 +19,17 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
 
         # Initialize Sprite
-        self.image = pygame.image.load("./assets/player.png")
-        self.image = pygame.transform.scale(self.image, (175, 200))
+        self.image = pygame.image.load("./assets/monkey.png")
         self.rect = self.image.get_rect()
+        self.rect.x = WIDTH/2 - 97.5
+        self.rect.y = HEIGHT - self.rect.height
 
         # Vector
         self.vel_x = 0
+        self.monkey_speed = 0
 
     def update(self):
-        self.rect.x = self.vel_x
-
-    # Player-controlled movement:
-    def move_left(self):
-        """ Called when the user hits the left arrow. """
-        self.vel_x = -6
-
-    def move_right(self):
-        """ Called when the user hits the right arrow. """
-        self.vel_x = 6
-
-    def stop(self):
-        """ Called when the user lets off the keyboard. """
-        self.vel_x = 0
+        self.rect.x += self.vel_x * self.monkey_speed
 
 
 def main():
@@ -63,27 +52,31 @@ def main():
     all_sprites_group.add(player)
 
     # ----- Level
-    player.rect.x = WIDTH/2 - 97.5
-    player.rect.y = HEIGHT - player.rect.height
 
     # ----- MAIN LOOP
     while not done:
         # -- Event Handler
+        keys = pygame.key.get_pressed()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 done = True
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    player.move_left()
-                if event.key == pygame.K_RIGHT:
-                    player.move_right()
+            if keys[pygame.K_LSHIFT]:
+                player.monkey_speed = 2
+            else:
+                player.monkey_speed = 1
 
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_LEFT:
-                    player.stop()
+            if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
-                    player.stop()
+                    player.vel_x = 6
+                elif event.key == pygame.K_LEFT:
+                    player.vel_x = -6
+
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT and player.vel_x < 0:
+                    player.vel_x = 0
+                if event.key == pygame.K_RIGHT and player.vel_x > 0:
+                    player.vel_x = 0
 
         # ----- LOGIC
 
