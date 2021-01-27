@@ -3,6 +3,7 @@
 # Press ⌃R to execute it or replace it with your code.
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 import pygame
+import random
 
 # ----- CONSTANTS
 BLACK = (0, 0, 0)
@@ -32,6 +33,24 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += self.vel_x * self.monkey_speed
 
 
+class Banana(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+
+        # Initialize Sprite
+        self.image = pygame.image.load("./assets/banana.png")
+        self.image = pygame.transform.scale(self.image, (112, 84))
+        self.rect = self.image.get_rect()
+        self.rect.x = WIDTH/2
+        self.rect.y = 0
+
+        # Vector
+        self.vel_y = 6
+
+    def update(self):
+        self.rect.y += self.vel_y
+
+
 def main():
     pygame.init()
 
@@ -46,12 +65,16 @@ def main():
 
     # ----- Sprites
     all_sprites_group = pygame.sprite.RenderUpdates()
+    banana_sprites = pygame.sprite.Group()
 
     # ----- Player
     player = Player()
     all_sprites_group.add(player)
 
-    # ----- Level
+    # ----- Banana
+    banana = Banana()
+    all_sprites_group.add(banana)
+    banana_sprites.add(banana)
 
     # ----- MAIN LOOP
     while not done:
@@ -79,14 +102,23 @@ def main():
                     player.vel_x = 0
 
         # ----- LOGIC
+        all_sprites_group.update()
 
         # ----- DRAW
         screen.fill(BLACK)
-        all_sprites_group.draw(screen)
+        dirty_rectangles = all_sprites_group.draw(screen)
         # ----- UPDATE
+        pygame.display.update(dirty_rectangles)
         pygame.display.flip()
         clock.tick(60)
-        all_sprites_group.update()
+
+        # If the player gets near the right side, shift the world left (-x)
+        if player.rect.right > WIDTH:
+            player.rect.right = WIDTH
+
+        # If the player gets near the left side, shift the world right (+x)
+        if player.rect.left < 0:
+            player.rect.left = 0
 
     pygame.quit()
 
