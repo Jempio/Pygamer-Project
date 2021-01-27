@@ -12,7 +12,7 @@ YELLOW = (255, 255, 0)
 SKY_BLUE = (95, 165, 228)
 WIDTH = 1280
 HEIGHT = 720
-TITLE = "<Move and Groove>"
+TITLE = "<George's Jungle Jam>"
 
 
 class Player(pygame.sprite.Sprite):
@@ -41,16 +41,17 @@ class Banana(pygame.sprite.Sprite):
         self.image = pygame.image.load("./assets/banana.png")
         self.image = pygame.transform.scale(self.image, (112, 84))
         self.rect = self.image.get_rect()
-        self.rect.x = WIDTH/2
+        self.rect.x = random.randrange(0, WIDTH - self.rect.width)
         self.rect.y = 0
 
         # Vector
         self.vel_y = 6
+        
 
     def update(self):
         self.rect.y += self.vel_y
-
-
+       
+       
 def main():
     pygame.init()
 
@@ -62,19 +63,25 @@ def main():
     # ----- LOCAL VARIABLES
     done = False
     clock = pygame.time.Clock()
+    banana_spawn_time = 1000
+    last_time_banana_spawned = pygame.time.get_ticks()
+    game_over = False
+    score = 0
+    lives = 3
 
     # ----- Sprites
     all_sprites_group = pygame.sprite.RenderUpdates()
-    banana_sprites = pygame.sprite.Group()
+    bananas_group = pygame.sprite.Group()
 
     # ----- Player
     player = Player()
     all_sprites_group.add(player)
 
     # ----- Banana
-    banana = Banana()
-    all_sprites_group.add(banana)
-    banana_sprites.add(banana)
+#     for i in range(50):
+#         banana = Banana()
+#         all_sprites_group.add(banana)
+#         bananas_group.add(banana)
 
     # ----- MAIN LOOP
     while not done:
@@ -83,30 +90,58 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 done = True
+            
+            if game_over == False:
 
-            if keys[pygame.K_LSHIFT]:
-                player.monkey_speed = 2
-            else:
-                player.monkey_speed = 1
+                if keys[pygame.K_LSHIFT]:
+                    player.monkey_speed = 5
+                else:
+                    player.monkey_speed = 2
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RIGHT:
-                    player.vel_x = 6
-                elif event.key == pygame.K_LEFT:
-                    player.vel_x = -6
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RIGHT:
+                        player.vel_x = 6
+                    elif event.key == pygame.K_LEFT:
+                        player.vel_x = -6
 
-            elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_LEFT and player.vel_x < 0:
-                    player.vel_x = 0
-                if event.key == pygame.K_RIGHT and player.vel_x > 0:
-                    player.vel_x = 0
+                elif event.type == pygame.KEYUP:
+                    if event.key == pygame.K_LEFT and player.vel_x < 0:
+                        player.vel_x = 0
+                    if event.key == pygame.K_RIGHT and player.vel_x > 0:
+                        player.vel_x = 0
 
         # ----- LOGIC
         all_sprites_group.update()
+        
+        # While the game is running
+        if game_over == False:
+        # banana spawn
+            if pygame.time.get_ticks() > last_time_banana_spawned + banana_spawn_time:
+                # set the new time to this current time
+                last_time_banana_spawned = pygame.time.get_ticks()
+                # spawn banana
+                banana = Banana()
+                all_sprites_group.add(banana)
+                bananas_group.add(banana)
+            
+        # check if every banana has collided with player
+            for banana in bananas_group:
+                if banana.rect.top < 0:
+                    banana.kill()
+                    score += 1
+                # Player collision
+                bananas_collected = pygame.sprite.spritecollide(player, bananas_group, True)
+                if len(bananas_collected) > 0:
+                    banana.kill()
+                
+        # game over
+        if lives == 0:
+            game_over = True
 
         # ----- DRAW
         screen.fill(BLACK)
         dirty_rectangles = all_sprites_group.draw(screen)
+        
         # ----- UPDATE
         pygame.display.update(dirty_rectangles)
         pygame.display.flip()
@@ -125,3 +160,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
