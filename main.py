@@ -12,7 +12,12 @@ YELLOW = (255, 255, 0)
 SKY_BLUE = (95, 165, 228)
 WIDTH = 1280
 HEIGHT = 720
+SPEED = 6
+DASH_SPEED = 5
+REG_SPEED = 2
 TITLE = "<George's Jungle Jam>"
+background_image = pygame.image.load("./assets/background.jpg")
+background_image = pygame.transform.scale(background_image, (1280, 800))
 
 
 class Player(pygame.sprite.Sprite):
@@ -49,6 +54,8 @@ class Banana(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.y += self.vel_y
+        if self.rect.y == HEIGHT - self.rect.height:
+            self.kill()
 
 
 class Coconut(pygame.sprite.Sprite):
@@ -67,6 +74,8 @@ class Coconut(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.y += self.vel_y
+        if self.rect.y == HEIGHT - self.rect.height:
+            self.kill()
 
 
 def main():
@@ -85,16 +94,25 @@ def main():
     last_time_banana_spawned = pygame.time.get_ticks()
     last_time_coconut_spawned = pygame.time.get_ticks()
     game_over = False
-    lives = 3
 
     # Score
     score_value = 0
     font = pygame.font.Font('freesansbold.ttf', 32)
-    text_x = 10
-    text_y = 10
+    text_score_x = 30
+    text_score_y = 10
 
     def show_score(x, y):
         score = font.render("Score: " + str(score_value), True, (255, 255, 255))
+        screen.blit(score, (x, y))
+
+    # Lives
+    lives_value = 3
+    font = pygame.font.Font('freesansbold.ttf', 32)
+    text_lives_x = 1120
+    text_lives_y = 10
+
+    def show_lives(x, y):
+        score = font.render("Lives: " + str(lives_value), True, (255, 255, 255))
         screen.blit(score, (x, y))
 
     # ----- Sprites
@@ -123,15 +141,15 @@ def main():
             if not game_over:
 
                 if keys[pygame.K_LSHIFT]:
-                    player.monkey_speed = 5
+                    player.monkey_speed = DASH_SPEED
                 else:
-                    player.monkey_speed = 2
+                    player.monkey_speed = REG_SPEED
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RIGHT:
-                        player.vel_x = 6
+                        player.vel_x = SPEED
                     elif event.key == pygame.K_LEFT:
-                        player.vel_x = -6
+                        player.vel_x = -SPEED
 
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT and player.vel_x < 0:
@@ -152,6 +170,7 @@ def main():
                 banana = Banana()
                 all_sprites_group.add(banana)
                 bananas_group.add(banana)
+
             # coconut spawn
             if pygame.time.get_ticks() > last_time_coconut_spawned + coconut_spawn_time:
                 last_time_coconut_spawned = pygame.time.get_ticks()
@@ -160,35 +179,47 @@ def main():
                 all_sprites_group.add(coconut)
                 coconuts_group.add(coconut)
             
-        # check if every banana has collided with player
+        # check if banana has collided with player
             for banana in bananas_group:
                 if banana.rect.top < 0:
                     banana.kill()
+
                 # Player collision
                 bananas_collected = pygame.sprite.spritecollide(player, bananas_group, True)
                 if len(bananas_collected) > 0:
                     banana.kill()
                     score_value += 1
 
+                # banana hits ground
+                if banana.rect.y == HEIGHT - banana.rect.height:
+                    lives_value -= 1
+
+        # check if coconut has collied with player
             for coconut in coconuts_group:
                 if coconut.rect.top < 0:
                     coconut.kill()
+
                 # Player collision
                 coconut_collected = pygame.sprite.spritecollide(player, coconuts_group, True)
                 if len(coconut_collected) > 0:
                     coconut.kill()
                     score_value += 3
 
-        # game over
-        if lives == 0:
+                # coconut hits ground
+                if coconut.rect.y == HEIGHT - coconut.rect.height:
+                    lives_value -= 1
+
+        # Game over
+        if lives_value <= 0:
             game_over = True
 
         # ----- DRAW
-        screen.fill(BLACK)
+        screen.blit(background_image, (0,0))
         dirty_rectangles = all_sprites_group.draw(screen)
         
         # ----- UPDATE
-        show_score(text_x,text_y)
+        show_score(text_score_x, text_score_y)
+        show_lives(text_lives_x, text_lives_y)
         pygame.display.update(dirty_rectangles)
         pygame.display.flip()
         clock.tick(60)
