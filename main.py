@@ -124,12 +124,6 @@ def main():
     player = Player()
     all_sprites_group.add(player)
 
-    # ----- Banana
-#     for i in range(50):
-#         banana = Banana()
-#         all_sprites_group.add(banana)
-#         bananas_group.add(banana)
-
     # ----- MAIN LOOP
     while not done:
         # -- Event Handler
@@ -191,7 +185,8 @@ def main():
                     score_value += 1
 
                 # banana hits ground
-                if banana.rect.y == HEIGHT - banana.rect.height:
+                if int(banana.rect.y) == int(HEIGHT - banana.rect.height):
+                    print("banana")
                     lives_value -= 1
 
         # check if coconut has collied with player
@@ -214,7 +209,7 @@ def main():
             game_over = True
 
         # ----- DRAW
-        screen.blit(background_image, (0,0))
+        screen.blit(background_image, (0, 0))
         dirty_rectangles = all_sprites_group.draw(screen)
         
         # ----- UPDATE
