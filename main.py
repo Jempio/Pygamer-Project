@@ -32,7 +32,7 @@ class Player(pygame.sprite.Sprite):
 
         # Vector
         self.vel_x = 0
-        self.monkey_speed = 0
+        self.monkey_speed = 2
 
     def update(self):
         self.rect.x += self.vel_x * self.monkey_speed
@@ -54,8 +54,6 @@ class Banana(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.y += self.vel_y
-        if self.rect.y == HEIGHT - self.rect.height:
-            self.kill()
 
 
 class Coconut(pygame.sprite.Sprite):
@@ -134,22 +132,21 @@ def main():
             
             if not game_over:
 
-                if keys[pygame.K_LSHIFT]:
-                    player.monkey_speed = DASH_SPEED
-                else:
-                    player.monkey_speed = REG_SPEED
-
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RIGHT:
                         player.vel_x = SPEED
                     elif event.key == pygame.K_LEFT:
                         player.vel_x = -SPEED
+                    elif event.key == pygame.K_LSHIFT:
+                        player.monkey_speed = DASH_SPEED
 
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT and player.vel_x < 0:
                         player.vel_x = 0
                     if event.key == pygame.K_RIGHT and player.vel_x > 0:
                         player.vel_x = 0
+                    if event.key == pygame.K_LSHIFT:
+                        player.monkey_speed = REG_SPEED
 
         # ----- LOGIC
         all_sprites_group.update()
@@ -185,9 +182,9 @@ def main():
                     score_value += 1
 
                 # banana hits ground
-                if int(banana.rect.y) == int(HEIGHT - banana.rect.height):
-                    print("banana")
+                if banana.rect.y >= HEIGHT - banana.rect.height - SPEED:
                     lives_value -= 1
+                    banana.kill()
 
         # check if coconut has collied with player
             for coconut in coconuts_group:
@@ -201,12 +198,16 @@ def main():
                     score_value += 3
 
                 # coconut hits ground
-                if coconut.rect.y == HEIGHT - coconut.rect.height:
+                if coconut.rect.y >= HEIGHT - coconut.rect.height - SPEED:
                     lives_value -= 1
+                    coconut.kill()
 
         # Game over
         if lives_value <= 0:
             game_over = True
+            player.vel_x = 0
+            for banana in bananas_group:
+                banana.kill()
 
         # ----- DRAW
         screen.blit(background_image, (0, 0))
