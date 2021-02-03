@@ -14,20 +14,19 @@ BROWN = (138, 51, 36)
 WIDTH = 1280
 HEIGHT = 720
 SPEED = 4
-DASH_SPEED = 5
+DASH_SPEED = 4
 REG_SPEED = 2
 TITLE = "<George's Jungle Jam>"
 font_name = pygame.font.match_font('impact')
 pygame.mixer.init()
 
 # Background
-background_image = pygame.image.load("./assets/background.jpg")
+background_image = pygame.image.load("images/background.jpg")
 background_image = pygame.transform.scale(background_image, (1280, 800))
 
 # Game Sounds
-collect_sound = pygame.mixer.Sound('collect.wav')
-pygame.mixer.music.load('menu.mp3')
-pygame.mixer.music.play(-1)
+collect_sound = pygame.mixer.Sound('sounds/collect.wav')
+monkey_sound = pygame.mixer.Sound('sounds/monkey_cheer.wav')
 
 
 def draw_text(surf, text, size, x, y):
@@ -43,7 +42,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
 
         # Initialize Sprite
-        self.image = pygame.image.load("./assets/monkey.png")
+        self.image = pygame.image.load("images/monkey.png")
         self.rect = self.image.get_rect()
         self.rect.x = WIDTH/2 - 97.5
         self.rect.y = HEIGHT - self.rect.height - 10
@@ -61,14 +60,14 @@ class Banana(pygame.sprite.Sprite):
         super().__init__()
 
         # Initialize Sprite
-        self.image = pygame.image.load("./assets/banana.png")
+        self.image = pygame.image.load("images/banana.png")
         self.image = pygame.transform.scale(self.image, (112, 84))
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(25, WIDTH - self.rect.width - 25)
         self.rect.y = 0
 
         # Vector
-        self.vel_y = 5
+        self.vel_y = 6
 
     def update(self):
         self.rect.y += self.vel_y
@@ -79,14 +78,14 @@ class Coconut(pygame.sprite.Sprite):
         super().__init__()
 
         # Initialize Sprite
-        self.image = pygame.image.load("./assets/coconut.png")
+        self.image = pygame.image.load("images/coconut.png")
         self.image = pygame.transform.scale(self.image, (100, 100))
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(0, WIDTH - self.rect.width)
         self.rect.y = 0
 
         # Vector
-        self.vel_y = 8
+        self.vel_y = 9
 
     def update(self):
         self.rect.y += self.vel_y
@@ -109,10 +108,10 @@ def main():
     coconut_spawn_time = random.randrange(8000, 12000)
     last_time_banana_spawned = pygame.time.get_ticks()
     last_time_coconut_spawned = pygame.time.get_ticks()
-    level_up = 10
+    level_up = 0
     high_score = 0
     score_value = 0
-    lives_value = 3
+    lives_value = 0
     game_over = True
 
     # Game Over Screen
@@ -132,6 +131,9 @@ def main():
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_SPACE:
                         waiting = False
+                        pygame.mixer.music.stop()
+                        pygame.mixer.music.load('sounds/game.mp3')
+                        pygame.mixer.music.play(-1)
 
     # ----- Sprites
     all_sprites_group = pygame.sprite.RenderUpdates()
@@ -148,8 +150,10 @@ def main():
             # check to see if highscore was beaten
             if score_value > high_score:
                 high_score = score_value
-                print(high_score)
-            print(score_value)
+            # reset game music
+            pygame.mixer.music.stop()
+            pygame.mixer.music.load('sounds/menu.mp3')
+            pygame.mixer.music.play(-1)
             # show game over screen
             show_go_screen()
             # reset game
@@ -195,7 +199,6 @@ def main():
             if pygame.time.get_ticks() > last_time_banana_spawned + banana_spawn_time:
                 # set the new time to this current time
                 last_time_banana_spawned = pygame.time.get_ticks()
-                print(banana_spawn_time)
                 # spawn banana
                 banana = Banana()
                 all_sprites_group.add(banana)
@@ -209,9 +212,10 @@ def main():
                 all_sprites_group.add(coconut)
                 coconuts_group.add(coconut)
             
-        # check if banana has collided with player
+        # check if banana hits ground
             for banana in bananas_group:
-                if banana.rect.top < 0:
+                if banana.rect.y >= HEIGHT - banana.rect.height - 7:
+                    lives_value -= 1
                     banana.kill()
 
                 # Player collision
@@ -221,14 +225,10 @@ def main():
                     collect_sound.play()
                     score_value += 1
 
-                # banana hits ground
-                if banana.rect.y >= HEIGHT - banana.rect.height - 6:
-                    lives_value -= 1
-                    banana.kill()
-
-        # check if coconut has collied with player
+        # check if coconut hits ground
             for coconut in coconuts_group:
-                if coconut.rect.top < 0:
+                if coconut.rect.y >= HEIGHT - coconut.rect.height - 11:
+                    lives_value -= 1
                     coconut.kill()
 
                 # Player collision
@@ -238,19 +238,18 @@ def main():
                     collect_sound.play()
                     score_value += 3
 
-                # coconut hits ground
-                if coconut.rect.y >= HEIGHT - coconut.rect.height - 10:
-                    lives_value -= 1
-                    coconut.kill()
-
         # decrease spawn time
             if score_value >= level_up:
-                banana_spawn_time -= 50
-                level_up += 10
+                banana_spawn_time -= 60
+                level_up += 12
 
             # Game over
             if lives_value == 0:
                 game_over = True
+
+        # play monkey sound
+        if score_value % 25 == 0 and score_value != 0:
+            monkey_sound.play()
 
         # ----- DRAW
         screen.blit(background_image, (0, 0))
@@ -272,6 +271,7 @@ def main():
         # add 25 to add a bit of a barrier
         if player.rect.left < 25:
             player.rect.left = 25
+
 
     pygame.quit()
 
